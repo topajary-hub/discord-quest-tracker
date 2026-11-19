@@ -4,98 +4,99 @@
 
 # Discord Quest Tracker
 
-**Автоматический менеджер и трекер заданий Discord Quests для Windows**
+**Automated desktop manager and tracker for Discord Quests & Orbs on Windows**
 
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%20(x64)-0078D6?style=flat-square&logo=windows)](https://github.com/topajary-hub)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%20(x64)-0078D6?style=flat-square&logo=windows)](https://github.com/topajary-hub/discord-quest-tracker/releases)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
-[![Project](https://img.shields.io/badge/Project-Kastrix-5865F2?style=flat-square&logo=telegram&logoColor=white)](https://t.me/kastrix_mod)
+[![Project](https://img.shields.io/badge/Project-Kastrix%20Product-5865F2?style=flat-square&logo=telegram&logoColor=white)](https://t.me/kastrix_mod)
 [![Author](https://img.shields.io/badge/Author-topajary--hub-181717?style=flat-square&logo=github)](https://github.com/topajary-hub)
 
-[Скачать релиз](../../releases) • [Интерфейс](#интерфейс) • [Возможности](#возможности) • [Сборка из исходников](#сборка-из-исходников) • [Автор и проект](#автор-и-проект)
+**English** | [Русский](README_RU.md)
+
+[Download Release](../../releases) • [Interface](#interface) • [Features](#features) • [Building from Source](#building-from-source) • [Author & Project](#author--project)
 
 </div>
 
 ---
 
-## О проекте
+## About the Project
 
-**Discord Quest Tracker** — десктопное приложение для Windows, написанное на **Go** с интерфейсом на **React** и **Framer Motion**. Программа подключается к официальному клиенту Discord на ПК, отслеживает доступные задания, баланс **Discord Orbs** и автоматически выполняет квесты в фоновом режиме.
+**Discord Quest Tracker** is a lightweight Windows desktop application built with **Go** and a modern **React + Framer Motion** interface. It connects directly to the official Discord desktop client, tracks all available quests alongside your **Discord Orbs** balance, and automates quest completion in the background.
 
-Весь веб-интерфейс, скрипты и ресурсы вшиты внутрь одного исполняемого файла `QuestTracker.exe` — для запуска не требуется установка Python, Node.js или сторонних библиотек.
+The entire web UI, scripts, and assets are embedded into a single standalone executable (`QuestTracker.exe`) — no Python, Node.js, or external dependencies required.
 
-## Интерфейс
+## Interface
 
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/f74965a2-ff29-4c6c-8b05-628c69fa24d6" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/ff24b377-14ee-44bd-aacb-908ca1266090" />
 
-
-
----
-
-## Возможности
-
-- **Автоматическое подключение к Discord:** приложение само находит установленный клиент Discord, запускает его с портом отладки или перезапускает в один клик с сохранением авторизации.
-- **Автопринятие и автозапуск:** фоновый мониторинг новых квестов — программа сама принимает доступные задания и ставит их в очередь выполнения.
-- **Умная очередь и одиночный запуск:** можно запустить все задания разом (быстрые видео-квесты выполняются первыми) или выбрать конкретный квест кнопкой **«Запустить»**.
-- **Трекинг Discord Orbs:** отображение текущего баланса кошелька, количества заработанных Orbs за сессию и суммы наград во всех активных заданиях.
-- **Работа в системном трее:** при закрытии окна можно выбрать — полностью завершить процесс или свернуть программу в трей Windows (возле часов), чтобы квесты продолжали выполняться в фоне.
-- **Защита от дубликатов:** при повторном открытии `QuestTracker.exe` не создаётся второй процесс — разворачивается уже запущенное окно.
-- **Адаптивный UI:** тёмная и светлая темы, сворачиваемая боковая панель (`Ctrl + B`), живой поиск, сортировка по наградам или времени и журнал событий в реальном времени.
 
 ---
 
-## Поддерживаемые типы заданий
+## Features
 
-| Тип задания в Discord | Название в трекере | Режим работы | Примечание |
+- **Automatic Discord Connection:** Automatically locates your Discord installation, launches it with the debugging port enabled, or restarts an active session in one click without logging you out.
+- **Auto-Enroll & Auto-Start:** Continuously monitors for new quests, automatically accepts available tasks, and queues them for completion.
+- **Smart Queue & Single-Quest Mode:** Run all eligible quests sequentially (prioritizing fast video quests first) or trigger individual tasks on demand.
+- **Discord Orbs Tracking:** Real-time display of your current wallet balance, Orbs earned during the active session, and total rewards available across pending quests.
+- **System Tray Integration:** Choose whether to completely exit the app or minimize it to the Windows system tray to keep quests running silently in the background.
+- **Single-Instance Protection:** Launching `QuestTracker.exe` while it is already minimized brings the existing window back into focus instead of spawning duplicate processes.
+- **Responsive Modern UI:** Dark and light themes, collapsible sidebar (`Ctrl + B`), instant search, multi-criteria sorting, and a live event log.
+
+---
+
+## Supported Quest Types
+
+| Discord Task Type | Tracker Label | Execution Mode | Notes |
 | :--- | :--- | :---: | :--- |
-| `WATCH_VIDEO` | Видео | Автоматически | Симуляция прогресса просмотра видео с учётом серверных таймингов |
-| `WATCH_VIDEO_ON_MOBILE` | Видео (моб.) | Автоматически | Проходится с ПК без необходимости заходить с телефона |
-| `PLAY_ON_DESKTOP` | Игра на ПК | Автоматически | Эмуляция запущенного процесса игры без её скачивания и установки |
-| `PLAY_ACTIVITY` | Активность | Автоматически | Отправка heartbeat-пакетов активности в голосовой или личный канал |
-| `STREAM_ON_DESKTOP` | Стрим в войсе | Полуавтомат | Подменяет метаданные игры; нужно включить демонстрацию любого окна в войсе с 1+ участником |
-| `ACHIEVEMENT_IN_ACTIVITY` | Вручную в активности | Вручную | Прогресс засчитывается внешним сервером мини-игры; автоматически пропускается в общей очереди |
+| `WATCH_VIDEO` | Video | Automatic | Simulates video playback progress respecting server-side timestamp rules |
+| `WATCH_VIDEO_ON_MOBILE` | Video (Mobile) | Automatic | Completes directly from desktop without needing a mobile device |
+| `PLAY_ON_DESKTOP` | Desktop Game | Automatic | Spoofs the running game process without downloading or installing the title |
+| `PLAY_ACTIVITY` | Activity | Automatic | Sends activity heartbeat requests to a voice or DM channel |
+| `STREAM_ON_DESKTOP` | Voice Stream | Semi-Auto | Spoofs streamed game metadata; requires screen sharing in a voice channel with 1+ other user |
+| `ACHIEVEMENT_IN_ACTIVITY` | Manual in Activity | Manual | Progress is validated by the third-party activity server; automatically skipped in the main queue |
 
 ---
 
-## Запуск для пользователей
+## Quick Start
 
-1. Перейди в раздел **[Releases](../../releases)** справа и скачай актуальный файл **`QuestTracker.exe`**.
-2. Запусти `QuestTracker.exe` в любой удобной папке.
-3. Если Discord уже был открыт до запуска трекера, нажми в правом верхнем углу кнопку **«Подключить ДС»** — клиент перезапустится с активным портом отладки.
-4. Нажми **«Запустить все»** или выбери нужное задание из списка.
+1. Go to the **[Releases](../../releases)** page and download the latest **`QuestTracker.exe`**.
+2. Place `QuestTracker.exe` in any folder and run it.
+3. If Discord was already running beforehand, click **Connect Discord** in the top-right corner to restart the client with debugging enabled.
+4. Click **Start All** or select a specific quest from the list.
 
-> **Примечание по Windows SmartScreen:**  
-> Так как `.exe` не подписан коммерческим сертификатом, при первом запуске скачанного файла Windows может показать окно *«Система Windows защитила ваш компьютер»*. Нажми **«Подробнее» → «Выполнить в любом случае»**. Для отображения окна приложения в системе должен быть установлен браузер Microsoft Edge (встроен в Windows 10/11) или Google Chrome.
+> **Windows SmartScreen Notice:**  
+> Because the binary is not signed with a commercial code-signing certificate, Windows Defender SmartScreen may display a warning on first launch. Click **More info → Run anyway** to proceed. Microsoft Edge (pre-installed on Windows 10/11) or Google Chrome is required to render the application window.
 
 ---
 
-## Как это работает
+## How It Works
 
-1. **Локальный сервер и UI:** при старте Go поднимает локальный HTTP-сервер на `127.0.0.1:17395` и открывает интерфейс в режиме отдельного окна приложения (`--app`), без вкладок и адресной строки браузера.
-2. **Chrome DevTools Protocol (CDP):** бэкенд связывается с клиентом Discord через локальный WebSocket-порт `127.0.0.1:9223` (`--remote-debugging-port=9223`).
-3. **Взаимодействие с модулями клиента:** внедряемый контроллер обращается к внутренним хранилищам Discord (`QuestsStore`, `RunningGameStore`, `ApplicationStreamingStore`, `VirtualCurrencyStore`, `FluxDispatcher`), корректно восстанавливая исходное состояние клиента при остановке или выходе.
-4. **Нативная интеграция с Windows:** системный трей (`Shell_NotifyIconW`) и скрытый вызов системных утилит реализованы напрямую через WinAPI (`syscall`), без появления всплывающих консольных окон.
+1. **Local Server & App Window:** On startup, Go spins up a local HTTP server on `127.0.0.1:17395` and opens the UI in standalone app mode (`--app`) without browser tabs or address bars.
+2. **Chrome DevTools Protocol (CDP):** The backend communicates with the Discord desktop client via WebSocket on `127.0.0.1:9223` (`--remote-debugging-port=9223`).
+3. **Client Store Integration:** The injected controller interfaces with Discord's internal stores (`QuestsStore`, `RunningGameStore`, `ApplicationStreamingStore`, `VirtualCurrencyStore`, `FluxDispatcher`) and cleanly restores original client state upon stopping or exiting.
+4. **Native Windows Integration:** System tray icon (`Shell_NotifyIconW`), context menus, and background process checks are implemented directly via WinAPI (`syscall`) with zero console window flicker.
 
-### Структура репозитория
+### Repository Structure
 
 ```text
-├── main.go                  # Точка входа, локальный HTTP-сервер, управление окном и жизненным циклом
-├── discord_windows.go       # Поиск клиента Discord, запуск с портом отладки и клиент CDP (WebSocket)
-├── handlers.go              # REST API эндпоинты для взаимодействия интерфейса с бэкендом
-├── tray_windows.go          # Системный трей Windows и контекстное меню через WinAPI
-├── rsrc_windows_amd64.syso  # Ресурс иконки приложения для Windows
-├── go.mod                   # Зависимости модуля Go
-├── .gitignore               # Исключения для Git
+├── main.go                  # Entry point, embedded asset server, window & lifecycle management
+├── discord_windows.go       # Discord client discovery, debug launch & CDP WebSocket client
+├── handlers.go              # REST API endpoints connecting the UI to the backend
+├── tray_windows.go          # Native Windows system tray & context menu via WinAPI
+├── rsrc_windows_amd64.syso  # Windows application icon resource
+├── go.mod                   # Go module dependencies
+├── .gitignore               # Git ignore rules
 └── web/
-    ├── index.html           # Интерфейс (React 18 + Tailwind CSS + Framer Motion + React-Toastify)
-    ├── inject.js            # Контроллер выполнения квестов и парсинга состояния в Discord
-    └── logo.png             # Иконка приложения
+    ├── index.html           # Frontend UI (React 18 + Tailwind CSS + Framer Motion + React-Toastify)
+    ├── inject.js            # Quest automation & state parsing controller
+    └── logo.png             # Application icon
 ```
 
 ---
 
-## Сборка из исходников
+## Building from Source
 
-Для самостоятельной компиляции потребуется установленный **Go 1.21+** и **Git**.
+Requires **Go 1.21+** and **Git** on Windows:
 
 ```bash
 git clone [https://github.com/topajary-hub/discord-quest-tracker.git](https://github.com/topajary-hub/discord-quest-tracker.git)
@@ -106,22 +107,30 @@ GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o QuestTracke
 
 ---
 
-## Частые вопросы
+## FAQ
 
-**Почему квест на стрим (`STREAM_ON_DESKTOP`) не набирает прогресс сам?**  
-Сервер Discord требует активный медиапоток WebRTC в голосовом канале, где помимо тебя находится хотя бы ещё один пользователь (или второй аккаунт). Трекер подменяет данные о транслируемой игре — тебе достаточно зайти в войс и включить демонстрацию любого окна.
+**Why doesn't the stream quest (`STREAM_ON_DESKTOP`) progress automatically?**  
+Discord's backend requires an active WebRTC media stream inside a voice channel with at least one other participant present. The tracker spoofs the streamed game metadata — you only need to join a voice channel and share any window.
 
-**Почему некоторые задания помечены как «Вручную в активности»?**  
-Квесты типа `ACHIEVEMENT_IN_ACTIVITY` проверяют выполнение конкретных действий внутри самой мини-игры на стороне её разработчиков. Трекер автоматически пропускает такие задания при запуске общей очереди, чтобы не блокировать остальные квесты.
+**Why are some quests labeled as "Manual in Activity"?**  
+Quests of type `ACHIEVEMENT_IN_ACTIVITY` verify specific in-game milestones on the activity developer's own servers. The tracker automatically skips these quests during queue execution so they do not block other tasks.
 
-**Как полностью закрыть программу?**  
-Нажми системный крестик закрытия окна и в появившемся меню выбери **«Закрыть полностью»** (либо нажми правой кнопкой мыши по иконке в системном трее → **«Выход»**). Приложение остановит все активные задачи в Discord и полностью выгрузится из памяти.
+**How do I completely close the application?**  
+Click the window close button and select **Close completely** (or right-click the system tray icon → **Exit**). The app will stop all active quest hooks in Discord and terminate its process cleanly.
 
 ---
 
-## Автор и проект
+## Author & Project
 
-- **Проект:** [Kastrix (Telegram)](https://t.me/kastrix_mod)
-- **Разработчик:** Аким
+- **Project:** [Kastrix Product (Telegram)](https://t.me/kastrix_mod)
+- **Developer:** Akim
 - **GitHub:** [topajary-hub](https://github.com/topajary-hub)
 - **Discord:** `FunTrue` (`! тома джери`)
+
+---
+
+<div align="center">
+
+If this tool saved you time and helped you farm Discord Orbs, consider giving the repository a **⭐ Star**!
+
+</div>
