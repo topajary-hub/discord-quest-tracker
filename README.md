@@ -25,7 +25,8 @@
 
 ## Интерфейс
 
-<img width="1909" height="1008" alt="image" src="https://github.com/user-attachments/assets/5eea07c5-dfec-4d6b-89eb-e12772778ec1" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/f74965a2-ff29-4c6c-8b05-628c69fa24d6" />
+
 
 
 ---
