@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+<meta charset="UTF-8">
+<title>Kastrix — Discord Quest Manager</title>
+<link rel="icon" type="image/png" href="/logo.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/react-toastify@9.1.3/dist/ReactToastify.min.css">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+        },
+        colors: {
+          border: 'hsl(var(--border))',
+          input: 'hsl(var(--input))',
+          ring: 'hsl(var(--ring))',
+          background: 'hsl(var(--background))',
+          foreground: 'hsl(var(--foreground))',
+          primary: {
+            DEFAULT: 'hsl(var(--primary))',
+            foreground: 'hsl(var(--primary-foreground))',
+          },
+          secondary: {
+            DEFAULT: 'hsl(var(--secondary))',
+            foreground: 'hsl(var(--secondary-foreground))',
+          },
+          destructive: {
+            DEFAULT: 'hsl(var(--destructive))',
+            foreground: 'hsl(var(--destructive-foreground))',
+          },
+          muted: {
+            DEFAULT: 'hsl(var(--muted))',
+            foreground: 'hsl(var(--muted-foreground))',
+          },
+          accent: {
+            DEFAULT: 'hsl(var(--accent))',
+            foreground: 'hsl(var(--accent-foreground))',
+          },
+          popover: {
+            DEFAULT: 'hsl(var(--popover))',
+            foreground: 'hsl(var(--popover-foreground))',
+          },
+          card: {
+            DEFAULT: 'hsl(var(--card))',
+            foreground: 'hsl(var(--card-foreground))',
+          },
+          sidebar: {
+            DEFAULT: 'hsl(var(--sidebar-background))',
+            foreground: 'hsl(var(--sidebar-foreground))',
+            accent: 'hsl(var(--sidebar-accent))',
+            'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+            border: 'hsl(var(--sidebar-border))',
+          },
+        },
+      },
+    },
+  }
+</script>
+
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.4/dist/framer-motion.js"></script>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react-toastify@9.1.3/dist/ReactToastify.umd.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.2/babel.min.js"></script>
+
+<style>
+  :root {
+    --background: 240 10% 98%;
+    --foreground: 240 10% 6%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 6%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 6%;
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 94%;
+    --secondary-foreground: 240 6% 12%;
+    --muted: 240 5% 94%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 93%;
+    --accent-foreground: 240 6% 12%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 89%;
+    --input: 240 6% 88%;
+    --ring: 243 75% 59%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 6% 15%;
+    --sidebar-accent: 240 5% 94%;
+    --sidebar-accent-foreground: 240 6% 10%;
+    --sidebar-border: 240 6% 90%;
+  }
+
+  .dark {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 96%;
+    --card: 240 8% 6.5%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 8% 8.5%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 243 75% 63%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 13%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 240 5% 13%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 240 5% 15%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 5% 14.5%;
+    --input: 240 5% 16%;
+    --ring: 243 75% 63%;
+    --sidebar-background: 240 9% 5.5%;
+    --sidebar-foreground: 240 5% 92%;
+    --sidebar-accent: 240 5% 13%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 5% 13.5%;
+  }
+
+  * {
+    box-sizing: border-box;
+    border-color: hsl(var(--border));
+  }
+
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @keyframes ghMonoFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .gh-shimmer-card {
+    background: linear-gradient(125deg, #18181b 0%, #27272a 28%, #09090b 52%, #3f3f46 76%, #18181b 100%);
+    background-size: 240% 240%;
+    animation: ghMonoFlow 6s ease infinite;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  :root:not(.dark) .gh-shimmer-card {
+    background: linear-gradient(125deg, #f4f4f5 0%, #ffffff 30%, #d4d4d8 55%, #fafafa 80%, #e4e4e7 100%);
+    background-size: 240% 240%;
+    animation: ghMonoFlow 6s ease infinite;
+    border: 1px solid rgba(24, 24, 27, 0.16);
+  }
+
+  .gh-shimmer-text {
+    background: linear-gradient(90deg, #a1a1aa 0%, #ffffff 30%, #52525b 55%, #f4f4f5 80%, #a1a1aa 100%);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: ghMonoFlow 4.5s linear infinite;
+  }
+
+  :root:not(.dark) .gh-shimmer-text {
+    background: linear-gradient(90deg, #52525b 0%, #09090b 30%, #71717a 55%, #18181b 80%, #52525b 100%);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: ghMonoFlow 4.5s linear infinite;
+  }
+
+  .Toastify__toast {
+    border-radius: 12px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border: 1px solid hsl(var(--border)) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35) !important;
+  }
+  .dark .Toastify__toast {
+    background: hsl(240 8% 9%) !important;
+    color: hsl(0 0% 96%) !important;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+const MotionLib = window.Motion || {
+  motion: new Proxy({}, {
+    get: (_, tag) => ({ children, layout, initial, animate, exit, transition, whileHover, whileTap, ...rest }) =>
+      React.createElement(tag, rest, children)
+  }),
+  AnimatePresence: ({ children }) => children,
+  LayoutGroup: ({ children }) => children,
+};
+const { motion, AnimatePresence, LayoutGroup } = MotionLib;
+
+const ToastLib = window.ReactToastify || {
+  ToastContainer: () => null,
+  toast: {
+    success: () => {},
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+  },
+};
+const { ToastContainer, toast } = ToastLib;
+
+const SvgIcon = ({ children, className = "h-4 w-4" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    {children}
+  </svg>
+);
+
+const SidebarIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <rect width="18" height="18" x="3" y="3" rx="3" />
+    <path d="M9 3v18" />
+  </SvgIcon>
+);
+
+const FlameIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+  </SvgIcon>
+);
+
+const GridIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <rect width="7" height="7" x="3" y="3" rx="1.5" />
+    <rect width="7" height="7" x="14" y="3" rx="1.5" />
+    <rect width="7" height="7" x="14" y="14" rx="1.5" />
+    <rect width="7" height="7" x="3" y="14" rx="1.5" />
+  </SvgIcon>
+);
+
+const OrbGemIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <polygon points="12 2 21 8.5 21 15.5 12 22 3 15.5 3 8.5 12 2" />
+    <line x1="12" y1="22" x2="12" y2="15.5" />
+    <polyline points="21 8.5 12 15.5 3 8.5" />
+  </SvgIcon>
+);
+
+const CheckBadgeIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+    <path d="m9 12 2 2 4-4" />
+  </SvgIcon>
+);
+
+const ActivityLogIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="8" y1="13" x2="16" y2="13" />
+    <line x1="8" y1="17" x2="13" y2="17" />
+  </SvgIcon>
+);
+
+const PlayIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <polygon points="6 3 20 12 6 21 6 3" />
+  </SvgIcon>
+);
+
+const StopIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <rect width="14" height="14" x="5" y="5" rx="2.5" />
+  </SvgIcon>
+);
+
+const SearchIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </SvgIcon>
+);
+
+const SortIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <path d="m3 16 4 4 4-4" />
+    <path d="M7 20V4" />
+    <path d="m21 8-4-4-4 4" />
+    <path d="M17 4v16" />
+  </SvgIcon>
+);
+
+const CheckIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <path d="M20 6 9 17l-5-5" />
+  </SvgIcon>
+);
+
+const SunIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2" /><path d="M12 20v2" />
+    <path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" />
+    <path d="M2 12h2" /><path d="M20 12h2" />
+    <path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+  </SvgIcon>
+);
+
+const MoonIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+  </SvgIcon>
+);
+
+const ExternalLinkIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" y1="14" x2="21" y2="3" />
+  </SvgIcon>
+);
+
+const CopyIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+  </SvgIcon>
+);
+
+const RefreshIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+    <path d="M8 16H3v5" />
+  </SvgIcon>
+);
+
+const GithubIcon = ({ className = "h-4 w-4" }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+  </svg>
+);
+
+const TrayMinimizeIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <rect x="2" y="4" width="20" height="16" rx="3" />
+    <path d="M8 15h8" />
+    <path d="m12 8 0 4" />
+    <path d="m9.5 10.5 2.5 2.5 2.5-2.5" />
+  </SvgIcon>
+);
+
+const PowerOffIcon = ({ className }) => (
+  <SvgIcon className={className}>
+    <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+    <line x1="12" y1="2" x2="12" y2="12" />
+  </SvgIcon>
+);
+
+function ToggleSwitch({ checked, onChange, disabled }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
+        checked ? "bg-primary" : "bg-input"
+      }`}
+    >
+      <motion.span
+        initial={false}
+        animate={{ x: checked ? 16 : 0 }}
+        transition={{ type: "spring", stiffness: 520, damping: 34 }}
+        className="pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm"
+      />
+    </button>
+  );
+}
+
+function QuestLogo({ urls, game }) {
+  const [idx, setIdx] = useState(0);
+  const list = Array.isArray(urls) ? urls.filter(Boolean) : [];
+  const initials = (game || "Q").slice(0, 2).toUpperCase();
+
+  useEffect(() => {
+    setIdx(0);
+  }, [list[0]]);
+
+  if (idx >= list.length) {
+    return (
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary text-sm font-semibold text-muted-foreground">
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={list[idx]}
+      alt=""
+      onError={() => setIdx((prev) => prev + 1)}
+      className="h-12 w-12 shrink-0 rounded-xl border border-border bg-secondary object-cover"
+    />
+  );
+}
+
+function fmtTask(type) {
+  const map = {
+    WATCH_VIDEO: "Видео",
+    WATCH_VIDEO_ON_MOBILE: "Видео (моб.)",
+    PLAY_ON_DESKTOP: "Игра на ПК",
+    STREAM_ON_DESKTOP: "Стрим в войсе",
+    PLAY_ACTIVITY: "Активность",
+    ACHIEVEMENT_IN_ACTIVITY: "Достижение",
+    ACHIEVEMENT_IN_GAME: "Достижение",
+  };
+  return map[type] || type;
+}
+
+function fmtProgress(done, needed, isStep) {
+  if (isStep) return `${done} / ${needed} шагов`;
+  const f = (s) => {
+    s = Math.max(0, Math.floor(s || 0));
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec < 10 ? "0" : ""}${sec}`;
+  };
+  return `${f(done)} / ${f(needed)}`;
+}
+
+function fmtExpires(iso) {
+  if (!iso) return "";
+  const diff = new Date(iso).getTime() - Date.now();
+  if (diff <= 0) return "истёк";
+  const h = Math.floor(diff / 3600000);
+  const d = Math.floor(h / 24);
+  return d > 0 ? `${d}д ${h % 24}ч` : `${h}ч`;
+}
+
+function App() {
+  const [dark, setDark] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState("active");
+  const [sortBy, setSortBy] = useState("smart");
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [busyId, setBusyId] = useState(null);
+  const [mainBusy, setMainBusy] = useState(false);
+  const [closeModalOpen, setCloseModalOpen] = useState(false);
+  const allowCloseRef = useRef(false);
+  const interactedRef = useRef(false);
+
+  const [status, setStatus] = useState({
+    discordInstalled: true,
+    discordRunning: true,
+    cdpConnected: false,
+    tracker: null,
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (dark) root.classList.add("dark");
+    else root.classList.remove("dark");
+  }, [dark]);
+
+  useEffect(() => {
+    const markInteracted = () => {
+      interactedRef.current = true;
+    };
+    const onKeyDown = (e) => {
+      interactedRef.current = true;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setSidebarOpen((v) => !v);
+      }
+      if (e.key === "Escape") {
+        setCloseModalOpen(false);
+        setSortMenuOpen(false);
+      }
+    };
+    const onClick = () => {
+      interactedRef.current = true;
+      setSortMenuOpen(false);
+    };
+    const onBeforeUnload = (e) => {
+      if (allowCloseRef.current) return;
+      if (interactedRef.current) {
+        setCloseModalOpen(true);
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    const onUnload = () => {
+      if (!allowCloseRef.current && navigator.sendBeacon) {
+        navigator.sendBeacon("/api/window-closed");
+      }
+    };
+
+    window.addEventListener("pointerdown", markInteracted);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("click", onClick);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    window.addEventListener("unload", onUnload);
+    return () => {
+      window.removeEventListener("pointerdown", markInteracted);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("click", onClick);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      window.removeEventListener("unload", onUnload);
+    };
+  }, []);
+
+  const fetchStatus = async () => {
+    try {
+      const res = await fetch("/api/status");
+      const data = await res.json();
+      setStatus(data);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    fetchStatus();
+    const timer = setInterval(fetchStatus, 2000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const postAction = async (url, payload, toastText, toastType = "info") => {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload ? JSON.stringify(payload) : undefined,
+      });
+      if (!res.ok) {
+        const errTxt = await res.text();
+        toast.error(errTxt || "Ошибка выполнения");
+        return;
+      }
+      const data = await res.json();
+      if (data.tracker) {
+        setStatus((prev) => ({ ...prev, cdpConnected: true, tracker: data.tracker }));
+      } else {
+        await fetchStatus();
+      }
+      if (toastText && toast[toastType]) {
+        toast[toastType](toastText);
+      }
+    } catch (e) {
+      toast.error("Нет связи с сервером");
+    }
+  };
+
+  const tracker = status.tracker;
+  const quests = tracker?.quests || [];
+  const isRunning = Boolean(tracker?.isRunning);
+  const orbBalance = typeof tracker?.orbBalance === "number" ? tracker.orbBalance : 0;
+  const hasBalance = typeof tracker?.orbBalance === "number";
+  const earnedOrbs = tracker?.earnedOrbs || 0;
+
+  const stats = useMemo(() => {
+    const active = quests.filter((q) => !q.completed);
+    const done = quests.filter((q) => q.completed);
+    const orbs = quests.filter((q) => (q.reward?.orbs || 0) > 0);
+    const availOrbs = active.reduce((s, q) => s + (q.reward?.orbs || 0), 0);
+    const remSec = active
+      .filter((q) => q.supported && !q.isStepTask)
+      .reduce((s, q) => s + Math.max(0, q.secondsNeeded - q.secondsDone), 0);
+    return {
+      total: quests.length,
+      activeCount: active.length,
+      doneCount: done.length,
+      orbsCount: orbs.length,
+      availOrbs,
+      remMinutes: Math.ceil(remSec / 60),
+    };
+  }, [quests]);
+
+  const filteredQuests = useMemo(() => {
+    let list = quests;
+    if (activeTab === "active") list = quests.filter((q) => !q.completed);
+    else if (activeTab === "orbs") list = quests.filter((q) => (q.reward?.orbs || 0) > 0);
+    else if (activeTab === "done") list = quests.filter((q) => q.completed);
+
+    const qStr = search.trim().toLowerCase();
+    if (qStr) {
+      list = list.filter(
+        (q) =>
+          (q.name || "").toLowerCase().includes(qStr) ||
+          (q.game || "").toLowerCase().includes(qStr)
+      );
+    }
+
+    const copy = [...list];
+    copy.sort((a, b) => {
+      if (sortBy === "orbs") {
+        const diff = (b.reward?.orbs || 0) - (a.reward?.orbs || 0);
+        if (diff !== 0) return diff;
+      } else if (sortBy === "fast") {
+        const rA = a.completed ? 9999999 : a.secondsNeeded - a.secondsDone;
+        const rB = b.completed ? 9999999 : b.secondsNeeded - b.secondsDone;
+        if (rA !== rB) return rA - rB;
+      } else if (sortBy === "expiring") {
+        const eA = a.completed ? 9e15 : new Date(a.expiresAt).getTime();
+        const eB = b.completed ? 9e15 : new Date(b.expiresAt).getTime();
+        if (eA !== eB) return eA - eB;
+      }
+
+      const rank = (q) => {
+        if (q.id === tracker?.currentQuestId) return 0;
+        if (!q.completed && q.supported && q.enrolled) return 1;
+        if (!q.completed && q.supported && !q.enrolled) return 2;
+        if (!q.completed && !q.supported) return 3;
+        return 4;
+      };
+      const rk = rank(a) - rank(b);
+      if (rk !== 0) return rk;
+      return b.percent - a.percent;
+    });
+
+    return copy;
+  }, [quests, activeTab, search, sortBy, tracker?.currentQuestId]);
+
+  const navItems = [
+    { id: "active", label: "Активные", icon: FlameIcon, count: stats.activeCount },
+    { id: "all", label: "Все задания", icon: GridIcon, count: stats.total },
+    { id: "orbs", label: "С наградой Orbs", icon: OrbGemIcon, count: stats.orbsCount },
+    { id: "done", label: "Выполненные", icon: CheckBadgeIcon, count: stats.doneCount },
+    { id: "logs", label: "Журнал событий", icon: ActivityLogIcon, count: tracker?.logs?.length || 0 },
+  ];
+
+  const sortOptions = [
+    { value: "smart", label: "По статусу" },
+    { value: "orbs", label: "Больше Orbs" },
+    { value: "fast", label: "Быстрые сначала" },
+    { value: "expiring", label: "Скоро истекают" },
+  ];
+
+  const currentTabObj = navItems.find((n) => n.id === activeTab) || navItems[0];
+
+  const handleToggleAll = async () => {
+    setMainBusy(true);
+    try {
+      if (isRunning) {
+        await postAction("/api/stop", null, "Выполнение остановлено", "info");
+      } else {
+        await postAction("/api/start", null, "Запущена очередь заданий", "success");
+      }
+    } finally {
+      setMainBusy(false);
+    }
+  };
+
+  const handleStartOne = async (q) => {
+    setBusyId(q.id);
+    try {
+      await postAction("/api/start-one", { id: q.id }, `Запущено: ${q.name}`, "success");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleStop = async () => {
+    setMainBusy(true);
+    try {
+      await postAction("/api/stop", null, "Остановлено", "info");
+    } finally {
+      setMainBusy(false);
+    }
+  };
+
+  const handleConnect = async () => {
+    setMainBusy(true);
+    try {
+      await postAction("/api/connect", null, "Перезапускаем Discord с портом отладки...", "info");
+    } finally {
+      setMainBusy(false);
+    }
+  };
+
+  const handleHideToTray = async () => {
+    allowCloseRef.current = true;
+    await fetch("/api/hide-tray", { method: "POST" });
+    setCloseModalOpen(false);
+    window.close();
+  };
+
+  const handleQuitCompletely = async () => {
+    allowCloseRef.current = true;
+    await fetch("/api/quit", { method: "POST" });
+    setCloseModalOpen(false);
+    window.close();
+  };
+
+  const copyText = (txt, label) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(txt);
+      toast.success(`${label} скопирован: ${txt}`);
+    }
+  };
+
+  return (
+    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground selection:bg-primary/20">
+      <ToastContainer
+        position="bottom-right"
+        theme={dark ? "dark" : "light"}
+        autoClose={2800}
+        newestOnTop
+        pauseOnHover={false}
+      />
+
+      <AnimatePresence>
+        {closeModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              onClick={() => setCloseModalOpen(false)}
+              className="fixed inset-0 bg-black/65 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 12 }}
+              transition={{ type: "spring", stiffness: 420, damping: 30 }}
+              className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl"
+            >
+              <div className="flex items-center gap-3.5">
+                <img src="/logo.png" alt="" className="h-11 w-11 rounded-xl border border-border" />
+                <div>
+                  <h2 className="text-base font-bold text-foreground">Действие при закрытии</h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Скрыть окно в системный трей или завершить работу полностью?
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleHideToTray}
+                  className="flex w-full items-center gap-3 rounded-xl border border-border bg-secondary/70 p-3.5 text-left hover:bg-accent transition-colors"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                    <TrayMinimizeIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-foreground">Скрыть в трей</div>
+                    <div className="text-xs text-muted-foreground">
+                      Убрать с панели задач и продолжить выполнение квестов в фоне
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleQuitCompletely}
+                  className="flex w-full items-center gap-3 rounded-xl border border-destructive/35 bg-destructive/10 p-3.5 text-left hover:bg-destructive/20 transition-colors"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive/20 text-destructive">
+                    <PowerOffIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-destructive">Закрыть полностью</div>
+                    <div className="text-xs text-muted-foreground">
+                      Остановить все задания и выгрузить процесс из диспетчера задач
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setCloseModalOpen(false)}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Отмена
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <motion.aside
+        animate={{ width: sidebarOpen ? 272 : 68 }}
+        transition={{ type: "spring", stiffness: 360, damping: 34 }}
+        className="flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground overflow-hidden"
+      >
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-3.5">
+          {sidebarOpen ? (
+            <div className="flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  status.cdpConnected
+                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"
+                    : status.discordInstalled
+                    ? "bg-amber-500"
+                    : "bg-red-500"
+                }`}
+              />
+              <span className="truncate">
+                {status.cdpConnected ? "Discord активен" : "Нет подключения"}
+              </span>
+            </div>
+          ) : (
+            <div className="mx-auto flex items-center justify-center">
+              <span
+                title={status.cdpConnected ? "Discord активен" : "Нет подключения"}
+                className={`h-2.5 w-2.5 rounded-full ${
+                  status.cdpConnected ? "bg-emerald-500" : "bg-amber-500"
+                }`}
+              />
+            </div>
+          )}
+
+          <div className="flex items-center gap-1">
+            {sidebarOpen && (
+              <button
+                type="button"
+                onClick={() => setDark((d) => !d)}
+                title="Сменить тему"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
+              >
+                {dark ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen((v) => !v)}
+              title="Свернуть панель (Ctrl+B)"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
+            >
+              <SidebarIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-3 py-4">
+          <nav className="flex flex-col gap-1">
+            {navItems.map((item) => {
+              const IconComp = item.icon;
+              const isSelected = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveTab(item.id)}
+                  title={!sidebarOpen ? `${item.label} (${item.count})` : undefined}
+                  className={`relative flex h-9 w-full items-center justify-between rounded-xl px-3 text-[13px] font-medium transition-colors ${
+                    isSelected
+                      ? "text-foreground font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {isSelected && (
+                    <motion.div
+                      layoutId="activeNavPill"
+                      transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 rounded-xl bg-sidebar-accent border border-border/60"
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2.5 truncate">
+                    <IconComp className="h-4 w-4 shrink-0" />
+                    {sidebarOpen && <span className="truncate">{item.label}</span>}
+                  </span>
+                  {sidebarOpen && (
+                    <span className="relative z-10 ml-auto rounded-md bg-background/80 px-1.5 py-0.5 font-mono text-[11px] font-medium text-muted-foreground tabular-nums">
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          {sidebarOpen && (
+            <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card/60 p-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Автоматизация
+                </span>
+                <button
+                  type="button"
+                  disabled={!status.cdpConnected}
+                  onClick={() => postAction("/api/enroll-all", null, "Принимаем доступные квесты...", "info")}
+                  className="text-[11.5px] font-medium text-primary hover:underline disabled:opacity-40"
+                >
+                  Принять все
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[13px] font-medium">Автопринятие</div>
+                  <div className="text-[11px] text-muted-foreground">Новые квесты</div>
+                </div>
+                <ToggleSwitch
+                  disabled={!status.cdpConnected}
+                  checked={Boolean(tracker?.autoEnroll)}
+                  onChange={(v) =>
+                    postAction("/api/settings", { autoEnroll: v }, v ? "Автопринятие включено" : "Автопринятие выключено", "info")
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[13px] font-medium">Автозапуск</div>
+                  <div className="text-[11px] text-muted-foreground">Сразу выполнять</div>
+                </div>
+                <ToggleSwitch
+                  disabled={!status.cdpConnected}
+                  checked={Boolean(tracker?.autoStart)}
+                  onChange={(v) =>
+                    postAction("/api/settings", { autoStart: v }, v ? "Автозапуск включён" : "Автозапуск выключен", "info")
+                  }
+                />
+              </div>
+            </div>
+          )}
+
+          {sidebarOpen && (
+            <div className="mt-auto flex flex-col gap-2.5">
+              <a
+                href="https://github.com/topajary-hub"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gh-shimmer-card group flex items-center justify-between rounded-2xl px-3.5 py-2.5 shadow-sm transition-transform hover:scale-[1.015]"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <GithubIcon className="h-4 w-4 shrink-0 text-zinc-300 dark:text-zinc-200" />
+                  <span className="gh-shimmer-text truncate font-mono text-xs font-bold tracking-tight">
+                    topajary-hub
+                  </span>
+                </div>
+                <ExternalLinkIcon className="h-3.5 w-3.5 shrink-0 text-zinc-400 group-hover:text-white transition-colors" />
+              </a>
+
+              <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-3.5">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/15 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-primary">
+                    Проект Kastrix
+                  </span>
+                  <a
+                    href="https://t.me/kastrix_mod"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    <span>Telegram</span>
+                    <ExternalLinkIcon className="h-3 w-3" />
+                  </a>
+                </div>
+
+                <div className="mt-2.5 flex flex-col gap-1.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Автор:</span>
+                    <span className="font-semibold text-foreground">Аким</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Discord:</span>
+                    <button
+                      type="button"
+                      onClick={() => copyText("FunTrue", "Discord")}
+                      className="inline-flex items-center gap-1 font-mono font-medium text-foreground hover:text-primary transition-colors"
+                      title="Нажми, чтобы скопировать"
+                    >
+                      <span>FunTrue</span>
+                      <CopyIcon className="h-3 w-3 opacity-60" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Ник:</span>
+                    <span className="font-medium text-foreground">! тома джери</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-sidebar-border p-3">
+          <div className="flex items-center gap-3 rounded-xl px-1.5 py-1">
+            {tracker?.user ? (
+              <img
+                src={tracker.user.avatarUrl}
+                alt=""
+                className="h-8 w-8 shrink-0 rounded-full border border-border object-cover"
+              />
+            ) : (
+              <img
+                src="/logo.png"
+                alt=""
+                className="h-8 w-8 shrink-0 rounded-full border border-border object-cover"
+              />
+            )}
+            {sidebarOpen && (
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-[13px] font-semibold leading-tight">
+                  {tracker?.user?.globalName || "Ожидание Discord"}
+                </span>
+                <span className="truncate text-[11px] text-muted-foreground mt-0.5">
+                  {tracker?.user?.username ? `@${tracker.user.username}` : "Не авторизован"}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.aside>
+
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-background/80 px-6 backdrop-blur-md">
+          <div>
+            <h1 className="text-lg font-semibold tracking-tight">{currentTabObj.label}</h1>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            {activeTab !== "logs" && (
+              <>
+                <div className="relative w-56">
+                  <SearchIcon className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Поиск по названию..."
+                    className="h-9 w-full rounded-xl border border-input bg-card pl-9 pr-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 transition-all"
+                  />
+                </div>
+
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={() => setSortMenuOpen((o) => !o)}
+                    className="inline-flex h-9 w-[168px] items-center justify-center gap-2 rounded-xl border border-input bg-card px-3 text-[13px] font-medium text-foreground hover:bg-accent transition-colors"
+                  >
+                    <SortIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{sortOptions.find((o) => o.value === sortBy)?.label}</span>
+                  </button>
+
+                  <AnimatePresence>
+                    {sortMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                        transition={{ duration: 0.14 }}
+                        className="absolute right-0 top-11 z-50 w-48 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-xl"
+                      >
+                        {sortOptions.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              setSortBy(opt.value);
+                              setSortMenuOpen(false);
+                            }}
+                            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] font-medium hover:bg-accent transition-colors"
+                          >
+                            <span>{opt.label}</span>
+                            {sortBy === opt.value && <CheckIcon className="h-3.5 w-3.5 text-primary" />}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </>
+            )}
+
+            {!status.cdpConnected ? (
+              <button
+                type="button"
+                disabled={mainBusy}
+                onClick={handleConnect}
+                className="inline-flex h-9 w-[170px] shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                <RefreshIcon className={`h-4 w-4 shrink-0 ${mainBusy ? "animate-spin" : ""}`} />
+                <span>Подключить ДС</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={mainBusy}
+                onClick={handleToggleAll}
+                className={`inline-flex h-9 w-[170px] shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-[13px] font-semibold shadow-sm transition-colors disabled:opacity-50 ${
+                  isRunning
+                    ? "bg-destructive text-destructive-foreground hover:opacity-90"
+                    : "bg-primary text-primary-foreground hover:opacity-90"
+                }`}
+              >
+                {isRunning ? (
+                  <>
+                    <StopIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span>Остановить</span>
+                  </>
+                ) : (
+                  <>
+                    <PlayIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span>Запустить все</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </header>
+
+        <main className="flex min-h-0 flex-1 flex-col gap-5 p-6">
+          <div className="grid shrink-0 grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>Баланс Orbs</span>
+                <OrbGemIcon className="h-4 w-4 text-violet-400" />
+              </div>
+              <div className="mt-2 font-mono text-2xl font-bold tracking-tight text-violet-400 tabular-nums">
+                {hasBalance ? orbBalance.toLocaleString("ru-RU") : "—"}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">Текущий кошелёк</div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>Заработано / Доступно</span>
+                <OrbGemIcon className="h-4 w-4 text-emerald-400" />
+              </div>
+              <div className="mt-2 font-mono text-2xl font-bold tracking-tight text-emerald-400 tabular-nums">
+                +{earnedOrbs.toLocaleString("ru-RU")}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                В активных: <span className="font-medium text-foreground">+{stats.availOrbs.toLocaleString("ru-RU")} Orbs</span>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>Активные задания</span>
+                <FlameIcon className="h-4 w-4 text-amber-400" />
+              </div>
+              <div className="mt-2 font-mono text-2xl font-bold tracking-tight tabular-nums">
+                {stats.activeCount}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {stats.activeCount > 0 ? `Осталось ~${stats.remMinutes} мин` : "Очередь пуста"}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>Завершено</span>
+                <CheckBadgeIcon className="h-4 w-4 text-primary" />
+              </div>
+              <div className="mt-2 font-mono text-2xl font-bold tracking-tight tabular-nums">
+                {stats.doneCount}
+                <span className="text-base font-normal text-muted-foreground"> / {stats.total}</span>
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">Выполнено квестов</div>
+            </div>
+          </div>
+
+          {activeTab === "logs" ? (
+            <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-border bg-card overflow-hidden">
+              <div className="flex items-center justify-between border-b border-border px-5 py-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Журнал событий ({tracker?.logs?.length || 0})
+                </span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-5 font-mono text-xs leading-relaxed">
+                {(tracker?.logs || []).length === 0 ? (
+                  <div className="text-muted-foreground">Записей пока нет...</div>
+                ) : (
+                  tracker.logs.map((l, idx) => (
+                    <div key={idx} className="border-b border-border/40 py-2 last:border-0">
+                      <span className="mr-3 text-muted-foreground">[{l.time}]</span>
+                      <span
+                        className={
+                          l.level === "ok"
+                            ? "text-emerald-400"
+                            : l.level === "run"
+                            ? "text-indigo-400"
+                            : l.level === "warn"
+                            ? "text-amber-400"
+                            : l.level === "err"
+                            ? "text-red-400"
+                            : "text-foreground"
+                        }
+                      >
+                        {l.text}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          ) : (
+            <LayoutGroup>
+              <motion.div
+                layout
+                className="grid min-h-0 flex-1 grid-cols-1 content-start gap-4 overflow-y-auto pr-1 lg:grid-cols-2 2xl:grid-cols-3"
+              >
+                <AnimatePresence mode="popLayout">
+                  {filteredQuests.length === 0 ? (
+                    <motion.div
+                      key="empty"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-border p-14 text-center"
+                    >
+                      <p className="text-sm font-semibold text-foreground">Задания не найдены</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Выбери другой раздел слева или нажми «Принять все»
+                      </p>
+                    </motion.div>
+                  ) : (
+                    filteredQuests.map((q) => {
+                      const isThisRunning = tracker?.currentQuestId === q.id && isRunning;
+                      return (
+                        <motion.div
+                          key={q.id}
+                          layout="position"
+                          initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.14 } }}
+                          transition={{
+                            layout: { type: "spring", stiffness: 360, damping: 32, mass: 0.85 },
+                            opacity: { duration: 0.2 },
+                            scale: { duration: 0.2 },
+                          }}
+                          className={`flex flex-col justify-between gap-4 rounded-2xl border bg-card p-5 transition-colors ${
+                            isThisRunning
+                              ? "border-primary ring-1 ring-primary/40"
+                              : "border-border hover:border-foreground/20"
+                          } ${q.completed ? "opacity-65" : ""}`}
+                        >
+                          <div className="flex items-start gap-3.5">
+                            <QuestLogo urls={q.imageUrls} game={q.game} />
+                            <div className="min-w-0 flex-1">
+                              <h3 className="truncate text-[14.5px] font-semibold leading-snug" title={q.name}>
+                                {q.name}
+                              </h3>
+                              <p className="mt-1 truncate text-xs text-muted-foreground">
+                                {q.game} • {fmtTask(q.taskType)} • {fmtExpires(q.expiresAt)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            {q.completed ? (
+                              <span className="inline-flex items-center rounded-lg bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-400">
+                                Выполнено
+                              </span>
+                            ) : isThisRunning ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary">
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+                                Выполняется
+                              </span>
+                            ) : q.isExternal ? (
+                              <span className="inline-flex items-center rounded-lg bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-400">
+                                Вручную в активности
+                              </span>
+                            ) : !q.supported ? (
+                              <span className="inline-flex items-center rounded-lg bg-destructive/15 px-2.5 py-1 text-xs font-semibold text-destructive">
+                                Не поддерживается
+                              </span>
+                            ) : q.enrolled ? (
+                              <span className="inline-flex items-center rounded-lg bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                                Принят
+                              </span>
+                            ) : q.enrollFailed ? (
+                              <span className="inline-flex items-center rounded-lg bg-destructive/15 px-2.5 py-1 text-xs font-semibold text-destructive">
+                                Недоступен в регионе
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                Новый
+                              </span>
+                            )}
+
+                            {(q.reward?.orbs || 0) > 0 ? (
+                              <span className="inline-flex items-center gap-1 rounded-lg border border-violet-500/30 bg-violet-500/15 px-2.5 py-1 font-mono text-xs font-semibold text-violet-300">
+                                +{q.reward.orbs} Orbs
+                              </span>
+                            ) : (
+                              <span className="max-w-[160px] truncate rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                {q.reward?.name}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3.5 pt-0.5">
+                            <div className="min-w-0 flex-1">
+                              <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                                <motion.div
+                                  initial={false}
+                                  animate={{ width: `${Math.min(100, Math.max(0, q.percent))}%` }}
+                                  transition={{ type: "spring", stiffness: 200, damping: 28 }}
+                                  className={`h-full rounded-full ${
+                                    q.completed ? "bg-emerald-500" : "bg-primary"
+                                  }`}
+                                />
+                              </div>
+                              <div className="mt-1.5 flex justify-between font-mono text-[11px] font-medium text-muted-foreground tabular-nums">
+                                <span>{fmtProgress(q.secondsDone, q.secondsNeeded, q.isStepTask)}</span>
+                                <span>{q.percent}%</span>
+                              </div>
+                            </div>
+
+                            {!q.completed && q.supported && (
+                              isThisRunning ? (
+                                <button
+                                  type="button"
+                                  onClick={handleStop}
+                                  className="inline-flex h-8 w-[96px] shrink-0 items-center justify-center rounded-xl bg-destructive px-3 text-xs font-semibold text-destructive-foreground hover:opacity-90 transition-opacity"
+                                >
+                                  Стоп
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={busyId === q.id}
+                                  onClick={() => handleStartOne(q)}
+                                  className="inline-flex h-8 w-[96px] shrink-0 items-center justify-center rounded-xl border border-input bg-secondary/70 px-3 text-xs font-semibold text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary disabled:opacity-50 transition-colors"
+                                >
+                                  {busyId === q.id ? "..." : "Запустить"}
+                                </button>
+                              )
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </LayoutGroup>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
