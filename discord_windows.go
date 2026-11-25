@@ -57,49 +57,43 @@ func findDiscordExe() string {
 	if localAppData == "" {
 		return ""
 	}
-	discordDir := filepath.Join(localAppData, "Discord")
-	matches, err := filepath.Glob(filepath.Join(discordDir, "app-*", "Discord.exe"))
-	if err == nil && len(matches) > 0 {
-		sort.Strings(matches)
-		return matches[len(matches)-1]
+	variants := []struct {
+		dir string
+		exe string
+	}{
+		{"Discord", "Discord.exe"},
+		{"DiscordPTB", "DiscordPTB.exe"},
+		{"DiscordCanary", "DiscordCanary.exe"},
 	}
-	updateExe := filepath.Join(discordDir, "Update.exe")
-	if _, err := os.Stat(updateExe); err == nil {
-		return updateExe
+	for _, v := range variants {
+		discordDir := filepath.Join(localAppData, v.dir)
+		matches, err := filepath.Glob(filepath.Join(discordDir, "app-*", v.exe))
+		if err == nil && len(matches) > 0 {
+			sort.Strings(matches)
+			return matches[len(matches)-1]
+		}
+		updateExe := filepath.Join(discordDir, "Update.exe")
+		if _, err := os.Stat(updateExe); err == nil {
+			return updateExe
+		}
 	}
 	return ""
 }
 
 func isDiscordRunning() bool {
-	cmd := hiddenCmd("tasklist", "/FI", "IMAGENAME eq Discord.exe", "/NH")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
-		return false
+	for _, proc := range []string{"Discord.exe", "DiscordPTB.exe", "DiscordCanary.exe"} {
+		cmd := hiddenCmd("tasklist", "/FI", "IMAGENAME eq "+proc, "/NH")
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		if err := cmd.Run(); err == nil && strings.Contains(strings.ToLower(out.String()), strings.ToLower(proc)) {
+			return true
+		}
 	}
-	return strings.Contains(strings.ToLower(out.String()), "discord.exe")
-}
-
-func launchOrRestartDiscordWithDebug() error {
-	exe := findDiscordExe()
-	if exe == "" {
-		return fmt.Errorf("Discord не найден в %%LOCALAPPDATA%%\\Discord")
-	}
-
-	if isDiscordRunning() {
-		_ = hiddenCmd("taskkill", "/F", "/IM", "Discord.exe").Run()
-		time.Sleep(1500 * time.Millisecond)
-	}
-
-	if strings.HasSuffix(strings.ToLower(exe), "update.exe") {
-		return hiddenCmd(exe, "--processStart", "Discord.exe", "--process-start-args=--remote-debugging-port="+cdpPort).Start()
-	}
-
-	return hiddenCmd(exe, "--remote-debugging-port="+cdpPort).Start()
+	return false
 }
 
 func getDiscordWSTarget() (string, error) {
-	client := &http.Client{Timeout: 1200 * time.Millisecond}
+	client := &http.Client{Timeout: 900 * time.Millisecond}
 	resp, err := client.Get("http://127.0.0.1:" + cdpPort + "/json")
 	if err != nil {
 		return "", err
@@ -116,10 +110,26 @@ func getDiscordWSTarget() (string, error) {
 		return "", err
 	}
 
+	var fallbackWS string
 	for _, t := range targets {
-		if t.Type == "page" && (strings.Contains(t.URL, "discord.com") || strings.Contains(t.URL, "discordapp.com")) {
-			return t.WebSocketDebuggerURL, nil
+		if t.Type != "page" || t.WebSocketDebuggerURL == "" {
+			continue
 		}
+		u := strings.ToLower(t.URL)
+		if strings.Contains(u, "updater") || strings.Contains(u, "splash") {
+			continue
+		}
+		if strings.Contains(u, "discord.com") || strings.Contains(u, "discordapp.com") {
+			if strings.Contains(u, "/channels/") || strings.Contains(u, "/app") {
+				return t.WebSocketDebuggerURL, nil
+			}
+			if fallbackWS == "" {
+				fallbackWS = t.WebSocketDebuggerURL
+			}
+		}
+	}
+	if fallbackWS != "" {
+		return fallbackWS, nil
 	}
 	return "", fmt.Errorf("главное окно Discord еще загружается")
 }
@@ -154,7 +164,7 @@ func evalInDiscord(expression string) (string, error) {
 		return "", err
 	}
 
-	_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	_ = conn.SetReadDeadline(time.Now().Add(12 * time.Second))
 	var evalResp evalResponse
 	if err := conn.ReadJSON(&evalResp); err != nil {
 		return "", err
@@ -169,4 +179,53 @@ func evalInDiscord(expression string) (string, error) {
 		return strVal, nil
 	}
 	return string(evalResp.Result.Result.Value), nil
+}
+
+func launchOrRestartDiscordWithDebug() error {
+	if _, err := getDiscordWSTarget(); err == nil {
+		return nil
+	}
+
+	exe := findDiscordExe()
+	if exe == "" {
+		return fmt.Errorf("Discord не найден в %%LOCALAPPDATA%%\\Discord")
+	}
+
+	if isDiscordRunning() {
+		for _, proc := range []string{"Discord.exe", "DiscordPTB.exe", "DiscordCanary.exe"} {
+			_ = hiddenCmd("taskkill", "/F", "/IM", proc, "/T").Run()
+		}
+		waitKill := time.Now().Add(4 * time.Second)
+		for time.Now().Before(waitKill) && isDiscordRunning() {
+			time.Sleep(200 * time.Millisecond)
+		}
+		time.Sleep(400 * time.Millisecond)
+	}
+
+	var startErr error
+	if strings.HasSuffix(strings.ToLower(exe), "update.exe") {
+		procName := "Discord.exe"
+		lowerPath := strings.ToLower(exe)
+		if strings.Contains(lowerPath, "discordptb") {
+			procName = "DiscordPTB.exe"
+		} else if strings.Contains(lowerPath, "discordcanary") {
+			procName = "DiscordCanary.exe"
+		}
+		startErr = hiddenCmd(exe, "--processStart", procName, "--process-start-args=--remote-debugging-port="+cdpPort).Start()
+	} else {
+		startErr = hiddenCmd(exe, "--remote-debugging-port="+cdpPort).Start()
+	}
+	if startErr != nil {
+		return startErr
+	}
+
+	deadline := time.Now().Add(25 * time.Second)
+	for time.Now().Before(deadline) {
+		if _, err := getDiscordWSTarget(); err == nil {
+			return nil
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return nil
 }

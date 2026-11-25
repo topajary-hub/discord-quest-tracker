@@ -486,7 +486,7 @@ function App() {
   const [mainBusy, setMainBusy] = useState(false);
   const [closeModalOpen, setCloseModalOpen] = useState(false);
   const allowCloseRef = useRef(false);
-  const interactedRef = useRef(false);
+  const beaconSentRef = useRef(false);
 
   const [status, setStatus] = useState({
     discordInstalled: true,
@@ -502,11 +502,9 @@ function App() {
   }, [dark]);
 
   useEffect(() => {
-    const markInteracted = () => {
-      interactedRef.current = true;
-    };
+    window.onbeforeunload = null;
+
     const onKeyDown = (e) => {
-      interactedRef.current = true;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
         e.preventDefault();
         setSidebarOpen((v) => !v);
@@ -517,34 +515,24 @@ function App() {
       }
     };
     const onClick = () => {
-      interactedRef.current = true;
       setSortMenuOpen(false);
     };
-    const onBeforeUnload = (e) => {
-      if (allowCloseRef.current) return;
-      if (interactedRef.current) {
-        setCloseModalOpen(true);
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-    const onUnload = () => {
-      if (!allowCloseRef.current && navigator.sendBeacon) {
+    const sendCloseBeacon = () => {
+      if (!allowCloseRef.current && !beaconSentRef.current && navigator.sendBeacon) {
+        beaconSentRef.current = true;
         navigator.sendBeacon("/api/window-closed");
       }
     };
 
-    window.addEventListener("pointerdown", markInteracted);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("click", onClick);
-    window.addEventListener("beforeunload", onBeforeUnload);
-    window.addEventListener("unload", onUnload);
+    window.addEventListener("pagehide", sendCloseBeacon);
+    window.addEventListener("unload", sendCloseBeacon);
     return () => {
-      window.removeEventListener("pointerdown", markInteracted);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("click", onClick);
-      window.removeEventListener("beforeunload", onBeforeUnload);
-      window.removeEventListener("unload", onUnload);
+      window.removeEventListener("pagehide", sendCloseBeacon);
+      window.removeEventListener("unload", sendCloseBeacon);
     };
   }, []);
 
@@ -558,7 +546,7 @@ function App() {
 
   useEffect(() => {
     fetchStatus();
-    const timer = setInterval(fetchStatus, 2000);
+    const timer = setInterval(fetchStatus, 1800);
     return () => clearInterval(timer);
   }, []);
 
@@ -709,7 +697,8 @@ function App() {
   const handleConnect = async () => {
     setMainBusy(true);
     try {
-      await postAction("/api/connect", null, "Перезапускаем Discord с портом отладки...", "info");
+      await postAction("/api/connect", null, "Подключаемся к Discord...", "info");
+      await fetchStatus();
     } finally {
       setMainBusy(false);
     }
@@ -829,9 +818,9 @@ function App() {
       >
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-3.5">
           {sidebarOpen ? (
-            <div className="flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium">
+            <div className="flex items-center gap-2 rounded-full border border-border bg-background/70 px-2.5 py-1 text-xs font-medium min-w-0">
               <span
-                className={`h-2 w-2 rounded-full ${
+                className={`h-2 w-2 shrink-0 rounded-full ${
                   status.cdpConnected
                     ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"
                     : status.discordInstalled
@@ -854,16 +843,26 @@ function App() {
             </div>
           )}
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 shrink-0">
             {sidebarOpen && (
-              <button
-                type="button"
-                onClick={() => setDark((d) => !d)}
-                title="Сменить тему"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
-              >
-                {dark ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setDark((d) => !d)}
+                  title="Сменить тему"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
+                >
+                  {dark ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCloseModalOpen(true)}
+                  title="Свернуть в трей или выйти"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/15 hover:text-destructive transition-colors"
+                >
+                  <PowerOffIcon className="h-4 w-4" />
+                </button>
+              </>
             )}
             <button
               type="button"
@@ -1038,10 +1037,14 @@ function App() {
             {sidebarOpen && (
               <div className="flex min-w-0 flex-col">
                 <span className="truncate text-[13px] font-semibold leading-tight">
-                  {tracker?.user?.globalName || "Ожидание Discord"}
+                  {tracker?.user?.globalName || (status.cdpConnected ? "Загрузка профиля..." : "Ожидание Discord")}
                 </span>
                 <span className="truncate text-[11px] text-muted-foreground mt-0.5">
-                  {tracker?.user?.username ? `@${tracker.user.username}` : "Не авторизован"}
+                  {tracker?.user?.username
+                    ? `@${tracker.user.username}`
+                    : status.cdpConnected
+                    ? "Синхронизация..."
+                    : "Не авторизован"}
                 </span>
               </div>
             )}

@@ -19,65 +19,20 @@
 		return JSON.stringify(window.__questTrackerV9.getState());
 	}
 
-	delete window.$;
-	let wpRequire = webpackChunkdiscord_app.push([[Symbol()], {}, r => r]);
-	webpackChunkdiscord_app.pop();
-
-	const modules = Object.values(wpRequire.c);
-
-	const findByKeys = (predicate) => {
-		for (const m of modules) {
-			const exp = m?.exports;
-			if (!exp || typeof exp !== "object") continue;
-			for (const k of ["A", "Ay", "Bo", "h", "Z", "default"]) {
-				try {
-					const val = exp[k];
-					if (val && predicate(val)) return val;
-				} catch (e) {}
-			}
-		}
-		return null;
-	};
-
-	const ApplicationStreamingStore =
-		modules.find(x => x?.exports?.A?.__proto__?.getStreamerActiveStreamMetadata)?.exports?.A ||
-		findByKeys(v => v?.__proto__?.getStreamerActiveStreamMetadata);
-
-	const RunningGameStore =
-		modules.find(x => x?.exports?.Ay?.getRunningGames)?.exports?.Ay ||
-		findByKeys(v => typeof v?.getRunningGames === "function" && typeof v?.getGameForPID === "function");
-
-	const QuestsStore =
-		modules.find(x => x?.exports?.A?.__proto__?.getQuest)?.exports?.A ||
-		findByKeys(v => v?.__proto__?.getQuest);
-
-	const ChannelStore =
-		modules.find(x => x?.exports?.A?.__proto__?.getAllThreadsForParent)?.exports?.A ||
-		findByKeys(v => v?.__proto__?.getAllThreadsForParent);
-
-	const GuildChannelStore =
-		modules.find(x => x?.exports?.A?.__proto__?.getSFWDefaultChannel)?.exports?.A ||
-		findByKeys(v => v?.__proto__?.getSFWDefaultChannel);
-
-	const FluxDispatcher =
-		modules.find(x => x?.exports?.h?.__proto__?.flushWaitQueue)?.exports?.h ||
-		findByKeys(v => v?.__proto__?.flushWaitQueue);
-
-	const api =
-		modules.find(x => x?.exports?.Bo?.get && x?.exports?.Bo?.post)?.exports?.Bo ||
-		findByKeys(v => typeof v?.get === "function" && typeof v?.post === "function" && typeof v?.getAPIBaseURL === "function");
-
-	const UserStore =
-		modules.find(x => x?.exports?.default?.__proto__?.getCurrentUser)?.exports?.default ||
-		findByKeys(v => v?.__proto__?.getCurrentUser);
-
-	const ApplicationStore =
-		modules.find(x => x?.exports?.A?.__proto__?.getApplication)?.exports?.A ||
-		findByKeys(v => v?.__proto__?.getApplication && v?.__proto__?.getApplicationByName);
-
-	const VirtualCurrencyStore =
-		modules.find(x => x?.exports?.A?.getName?.() === "VirtualCurrencyStore")?.exports?.A ||
-		findByKeys(v => v?.getName?.() === "VirtualCurrencyStore" || typeof v?.fetchBalance === "function");
+	if (typeof webpackChunkdiscord_app === "undefined" || !Array.isArray(webpackChunkdiscord_app)) {
+		return JSON.stringify({
+			isRunning: false,
+			autoEnroll: true,
+			autoStart: false,
+			currentQuestId: null,
+			orbBalance: null,
+			earnedOrbs: 0,
+			user: null,
+			initError: "Ожидание загрузки модулей Discord...",
+			logs: [],
+			quests: []
+		});
+	}
 
 	const supportedTasks = [
 		"WATCH_VIDEO",
@@ -86,6 +41,20 @@
 		"PLAY_ACTIVITY",
 		"WATCH_VIDEO_ON_MOBILE"
 	];
+
+	const stores = {
+		ApplicationStreamingStore: null,
+		RunningGameStore: null,
+		QuestsStore: null,
+		ChannelStore: null,
+		GuildChannelStore: null,
+		FluxDispatcher: null,
+		api: null,
+		UserStore: null,
+		ApplicationStore: null,
+		VirtualCurrencyStore: null,
+		ready: false
+	};
 
 	const state = {
 		isRunning: false,
@@ -103,13 +72,106 @@
 		cleanupFns: [],
 		abort: false,
 		runToken: 0,
-		initError: (!QuestsStore || !api || !FluxDispatcher) ? "Не найдены внутренние модули Discord" : null
+		initError: "Ожидание загрузки аккаунта Discord..."
 	};
 
 	function addLog(msg, level = "info") {
 		const now = new Date().toLocaleTimeString("ru-RU");
 		state.logs.unshift({ time: now, text: msg, level });
 		if (state.logs.length > 80) state.logs.length = 80;
+	}
+
+	function ensureModules() {
+		if (stores.ready && stores.UserStore?.getCurrentUser?.()?.id && stores.QuestsStore) {
+			return true;
+		}
+		if (typeof webpackChunkdiscord_app === "undefined" || !Array.isArray(webpackChunkdiscord_app)) {
+			return false;
+		}
+
+		let wpRequire = null;
+		try {
+			delete window.$;
+			wpRequire = webpackChunkdiscord_app.push([[Symbol()], {}, r => r]);
+			webpackChunkdiscord_app.pop();
+		} catch (e) {
+			return false;
+		}
+
+		if (!wpRequire || !wpRequire.c) return false;
+		const modules = Object.values(wpRequire.c);
+
+		const findByKeys = (predicate) => {
+			for (const m of modules) {
+				const exp = m?.exports;
+				if (!exp || typeof exp !== "object") continue;
+				for (const k of ["A", "Ay", "Bo", "h", "Z", "ZP", "default"]) {
+					try {
+						const val = exp[k];
+						if (val && predicate(val)) return val;
+					} catch (e) {}
+				}
+				try {
+					if (predicate(exp)) return exp;
+				} catch (e) {}
+			}
+			return null;
+		};
+
+		stores.ApplicationStreamingStore =
+			modules.find(x => x?.exports?.A?.__proto__?.getStreamerActiveStreamMetadata)?.exports?.A ||
+			findByKeys(v => v?.__proto__?.getStreamerActiveStreamMetadata || typeof v?.getStreamerActiveStreamMetadata === "function");
+
+		stores.RunningGameStore =
+			modules.find(x => x?.exports?.Ay?.getRunningGames)?.exports?.Ay ||
+			findByKeys(v => typeof v?.getRunningGames === "function" && typeof v?.getGameForPID === "function");
+
+		stores.QuestsStore =
+			modules.find(x => x?.exports?.A?.__proto__?.getQuest)?.exports?.A ||
+			findByKeys(v => v?.__proto__?.getQuest || typeof v?.getQuest === "function");
+
+		stores.ChannelStore =
+			modules.find(x => x?.exports?.A?.__proto__?.getAllThreadsForParent)?.exports?.A ||
+			findByKeys(v => v?.__proto__?.getAllThreadsForParent || typeof v?.getAllThreadsForParent === "function");
+
+		stores.GuildChannelStore =
+			modules.find(x => x?.exports?.A?.__proto__?.getSFWDefaultChannel)?.exports?.A ||
+			findByKeys(v => v?.__proto__?.getSFWDefaultChannel || typeof v?.getSFWDefaultChannel === "function");
+
+		stores.FluxDispatcher =
+			modules.find(x => x?.exports?.h?.__proto__?.flushWaitQueue)?.exports?.h ||
+			findByKeys(v => v?.__proto__?.flushWaitQueue || (typeof v?.dispatch === "function" && typeof v?.subscribe === "function" && v?._interceptors));
+
+		stores.api =
+			modules.find(x => x?.exports?.Bo?.get && x?.exports?.Bo?.post)?.exports?.Bo ||
+			findByKeys(v => typeof v?.get === "function" && typeof v?.post === "function" && typeof v?.getAPIBaseURL === "function");
+
+		stores.UserStore =
+			modules.find(x => x?.exports?.default?.__proto__?.getCurrentUser)?.exports?.default ||
+			findByKeys(v => v?.__proto__?.getCurrentUser || (typeof v?.getCurrentUser === "function" && typeof v?.getUser === "function"));
+
+		stores.ApplicationStore =
+			modules.find(x => x?.exports?.A?.__proto__?.getApplication)?.exports?.A ||
+			findByKeys(v => (v?.__proto__?.getApplication && v?.__proto__?.getApplicationByName) || (typeof v?.getApplication === "function" && typeof v?.getApplicationByName === "function"));
+
+		stores.VirtualCurrencyStore =
+			modules.find(x => x?.exports?.A?.getName?.() === "VirtualCurrencyStore")?.exports?.A ||
+			findByKeys(v => v?.getName?.() === "VirtualCurrencyStore" || typeof v?.fetchBalance === "function");
+
+		const currentUser = stores.UserStore?.getCurrentUser?.();
+		if (stores.QuestsStore && stores.api && stores.FluxDispatcher && currentUser && currentUser.id) {
+			if (!stores.ready) {
+				stores.ready = true;
+				state.initError = null;
+				addLog("Контроллер подключен к Discord (" + (currentUser.globalName || currentUser.username) + ").", "ok");
+				refreshBalance(true);
+				setTimeout(() => tick(), 100);
+			}
+			return true;
+		}
+
+		state.initError = "Ожидание загрузки аккаунта Discord...";
+		return false;
 	}
 
 	function formatErr(e) {
@@ -120,6 +182,9 @@
 	}
 
 	function applyBalance(val) {
+		if (val && typeof val === "object" && typeof val.balance === "number") {
+			val = val.balance;
+		}
 		if (typeof val !== "number" || Number.isNaN(val)) return;
 		if (state.initialOrbBalance === null) {
 			state.initialOrbBalance = val;
@@ -129,10 +194,10 @@
 
 	function readStoreBalance() {
 		try {
-			if (VirtualCurrencyStore) {
-				const val = typeof VirtualCurrencyStore.getBalance === "function"
-					? VirtualCurrencyStore.getBalance()
-					: (VirtualCurrencyStore.balance ?? VirtualCurrencyStore._balance);
+			if (stores.VirtualCurrencyStore) {
+				const val = typeof stores.VirtualCurrencyStore.getBalance === "function"
+					? stores.VirtualCurrencyStore.getBalance()
+					: (stores.VirtualCurrencyStore.balance ?? stores.VirtualCurrencyStore._balance);
 				applyBalance(val);
 			}
 		} catch (e) {}
@@ -140,14 +205,14 @@
 
 	async function refreshBalance(force) {
 		readStoreBalance();
-		if (!api) return;
+		if (!stores.api) return;
 
 		const now = Date.now();
 		if (!force && state.orbBalance !== null && now - state.lastBalanceFetch < 15000) return;
 		state.lastBalanceFetch = now;
 
 		try {
-			const res = await api.get({ url: "/users/@me/virtual-currency/balance" });
+			const res = await stores.api.get({ url: "/users/@me/virtual-currency/balance" });
 			const body = res?.body;
 			if (body) {
 				const num = body.balance ?? body.orb_balance ?? body.virtual_currency_balance;
@@ -161,8 +226,8 @@
 
 	function getUserInfo() {
 		try {
-			const u = UserStore?.getCurrentUser?.();
-			if (!u) return null;
+			const u = stores.UserStore?.getCurrentUser?.();
+			if (!u || !u.id) return null;
 			const avatarUrl = u.avatar
 				? "https://cdn.discordapp.com/avatars/" + u.id + "/" + u.avatar + ".png?size=64"
 				: "https://cdn.discordapp.com/embed/avatars/0.png";
@@ -208,7 +273,7 @@
 		const appIcon = q.config?.application?.icon;
 		if (appId) {
 			try {
-				const appObj = ApplicationStore?.getApplication?.(appId);
+				const appObj = stores.ApplicationStore?.getApplication?.(appId);
 				if (appObj && typeof appObj.getIconURL === "function") {
 					const iconUrl = appObj.getIconURL(128);
 					if (iconUrl) urls.push(iconUrl);
@@ -272,9 +337,9 @@
 	}
 
 	function parseQuests() {
-		if (!QuestsStore || !QuestsStore.quests) return [];
+		if (!stores.QuestsStore || !stores.QuestsStore.quests) return [];
 		const list = [];
-		for (const q of QuestsStore.quests.values()) {
+		for (const q of stores.QuestsStore.quests.values()) {
 			const info = getTaskInfo(q);
 			if (!info) continue;
 			const { taskName, taskData } = info;
@@ -316,7 +381,7 @@
 		if (state.enrollingIds.has(questId) || state.failedEnrollIds.has(questId)) return false;
 		state.enrollingIds.add(questId);
 		try {
-			await api.post({
+			await stores.api.post({
 				url: "/quests/" + questId + "/enroll",
 				body: { location: 11, is_targeted: false }
 			});
@@ -334,17 +399,17 @@
 	async function waitForEnrollment(questId, timeoutMs = 3000) {
 		const started = Date.now();
 		while (Date.now() - started < timeoutMs) {
-			const q = QuestsStore.quests.get(questId);
+			const q = stores.QuestsStore.quests.get(questId);
 			if (q && q.userStatus?.enrolledAt) return q;
 			await new Promise(r => setTimeout(r, 250));
 		}
-		return QuestsStore.quests.get(questId);
+		return stores.QuestsStore.quests.get(questId);
 	}
 
 	async function enrollAllAvailable() {
-		if (!QuestsStore || !QuestsStore.quests || !api) return 0;
+		if (!stores.QuestsStore || !stores.QuestsStore.quests || !stores.api) return 0;
 		let count = 0;
-		for (const q of QuestsStore.quests.values()) {
+		for (const q of stores.QuestsStore.quests.values()) {
 			const info = getTaskInfo(q);
 			if (!info) continue;
 			const hasSupported = supportedTasks.includes(info.taskName);
@@ -390,7 +455,8 @@
 	}
 
 	function collectEligibleQueue() {
-		const items = [...QuestsStore.quests.values()].filter(x => {
+		if (!stores.QuestsStore || !stores.QuestsStore.quests) return [];
+		const items = [...stores.QuestsStore.quests.values()].filter(x => {
 			const info = getTaskInfo(x);
 			return x.userStatus?.enrolledAt &&
 				!x.userStatus?.completedAt &&
@@ -454,7 +520,7 @@
 								continue;
 							}
 
-							const res = await api.post({
+							const res = await stores.api.post({
 								url: "/quests/" + quest.id + "/video-progress",
 								body: { timestamp: sendTimestamp }
 							});
@@ -470,7 +536,7 @@
 						if (state.abort || state.runToken !== token) return resolve();
 
 						if (!completed) {
-							await api.post({
+							await stores.api.post({
 								url: "/quests/" + quest.id + "/video-progress",
 								body: { timestamp: secondsNeeded }
 							});
@@ -485,7 +551,7 @@
 				})();
 
 			} else if (taskName === "PLAY_ON_DESKTOP") {
-				api.get({ url: "/applications/public?application_ids=" + applicationId }).then(res => {
+				stores.api.get({ url: "/applications/public?application_ids=" + applicationId }).then(res => {
 					if (state.abort || state.runToken !== token) return resolve();
 					const appData = res.body[0];
 					const exeName = appData.executables?.find(x => x.os === "win32")?.name?.replace(">", "") ?? appData.name.replace(/[\/\\:*?"<>|]/g, "");
@@ -504,20 +570,20 @@
 						start: Date.now()
 					};
 
-					const realGames = RunningGameStore.getRunningGames();
+					const realGames = stores.RunningGameStore.getRunningGames();
 					const fakeGames = [fakeGame];
-					const realGetRunningGames = RunningGameStore.getRunningGames;
-					const realGetGameForPID = RunningGameStore.getGameForPID;
+					const realGetRunningGames = stores.RunningGameStore.getRunningGames;
+					const realGetGameForPID = stores.RunningGameStore.getGameForPID;
 
-					RunningGameStore.getRunningGames = () => fakeGames;
-					RunningGameStore.getGameForPID = (p) => fakeGames.find(x => x.pid === p);
-					FluxDispatcher.dispatch({ type: "RUNNING_GAMES_CHANGE", removed: realGames, added: [fakeGame], games: fakeGames });
+					stores.RunningGameStore.getRunningGames = () => fakeGames;
+					stores.RunningGameStore.getGameForPID = (p) => fakeGames.find(x => x.pid === p);
+					stores.FluxDispatcher.dispatch({ type: "RUNNING_GAMES_CHANGE", removed: realGames, added: [fakeGame], games: fakeGames });
 
 					const restoreGame = () => {
-						RunningGameStore.getRunningGames = realGetRunningGames;
-						RunningGameStore.getGameForPID = realGetGameForPID;
-						FluxDispatcher.dispatch({ type: "RUNNING_GAMES_CHANGE", removed: [fakeGame], added: [], games: realGames });
-						FluxDispatcher.unsubscribe("QUESTS_SEND_HEARTBEAT_SUCCESS", fn);
+						stores.RunningGameStore.getRunningGames = realGetRunningGames;
+						stores.RunningGameStore.getGameForPID = realGetGameForPID;
+						stores.FluxDispatcher.dispatch({ type: "RUNNING_GAMES_CHANGE", removed: [fakeGame], added: [], games: realGames });
+						stores.FluxDispatcher.unsubscribe("QUESTS_SEND_HEARTBEAT_SUCCESS", fn);
 					};
 
 					const fn = data => {
@@ -538,7 +604,7 @@
 					};
 
 					state.cleanupFns.push(restoreGame);
-					FluxDispatcher.subscribe("QUESTS_SEND_HEARTBEAT_SUCCESS", fn);
+					stores.FluxDispatcher.subscribe("QUESTS_SEND_HEARTBEAT_SUCCESS", fn);
 					addLog("Игра «" + appData.name + "» запущена (~" + Math.ceil((secondsNeeded - secondsDone) / 60) + " мин)", "run");
 				}).catch(err => {
 					addLog("Ошибка игры «" + questName + "»: " + formatErr(err), "err");
@@ -546,20 +612,20 @@
 				});
 
 			} else if (taskName === "STREAM_ON_DESKTOP") {
-				if (!ApplicationStreamingStore) {
+				if (!stores.ApplicationStreamingStore) {
 					addLog("Модуль стрима недоступен для «" + questName + "»", "err");
 					return resolve();
 				}
-				const realFunc = ApplicationStreamingStore.getStreamerActiveStreamMetadata;
-				ApplicationStreamingStore.getStreamerActiveStreamMetadata = () => ({
+				const realFunc = stores.ApplicationStreamingStore.getStreamerActiveStreamMetadata;
+				stores.ApplicationStreamingStore.getStreamerActiveStreamMetadata = () => ({
 					id: applicationId,
 					pid: pid,
 					sourceName: null
 				});
 
 				const restoreStream = () => {
-					ApplicationStreamingStore.getStreamerActiveStreamMetadata = realFunc;
-					FluxDispatcher.unsubscribe("QUESTS_SEND_HEARTBEAT_SUCCESS", fn);
+					stores.ApplicationStreamingStore.getStreamerActiveStreamMetadata = realFunc;
+					stores.FluxDispatcher.unsubscribe("QUESTS_SEND_HEARTBEAT_SUCCESS", fn);
 				};
 
 				const fn = data => {
@@ -580,12 +646,12 @@
 				};
 
 				state.cleanupFns.push(restoreStream);
-				FluxDispatcher.subscribe("QUESTS_SEND_HEARTBEAT_SUCCESS", fn);
+				stores.FluxDispatcher.subscribe("QUESTS_SEND_HEARTBEAT_SUCCESS", fn);
 				addLog("Стрим «" + questName + "»: включи демку экрана в войсе (нужен 1+ человек).", "run");
 
 			} else if (taskName === "PLAY_ACTIVITY") {
-				const dmId = ChannelStore?.getSortedPrivateChannels?.()[0]?.id;
-				const guildWithVoice = Object.values(GuildChannelStore?.getAllGuilds?.() || {}).find(x => x != null && x.VOCAL && x.VOCAL.length > 0);
+				const dmId = stores.ChannelStore?.getSortedPrivateChannels?.()[0]?.id;
+				const guildWithVoice = Object.values(stores.GuildChannelStore?.getAllGuilds?.() || {}).find(x => x != null && x.VOCAL && x.VOCAL.length > 0);
 				const channelId = dmId ?? guildWithVoice?.VOCAL?.[0]?.channel?.id;
 
 				if (!channelId) {
@@ -599,7 +665,7 @@
 				(async () => {
 					try {
 						while (!state.abort && state.runToken === token) {
-							const res = await api.post({
+							const res = await stores.api.post({
 								url: "/quests/" + quest.id + "/heartbeat",
 								body: { stream_key: streamKey, terminal: false }
 							});
@@ -607,7 +673,7 @@
 							state.liveProgress[quest.id] = progress;
 
 							if (progress >= secondsNeeded || res.body?.completed_at != null) {
-								await api.post({
+								await stores.api.post({
 									url: "/quests/" + quest.id + "/heartbeat",
 									body: { stream_key: streamKey, terminal: true }
 								});
@@ -631,7 +697,7 @@
 
 	async function runSingleBg(questId, token) {
 		try {
-			let quest = QuestsStore.quests.get(questId);
+			let quest = stores.QuestsStore.quests.get(questId);
 			if (!quest) {
 				addLog("Квест не найден.", "err");
 				return;
@@ -681,6 +747,7 @@
 	}
 
 	function getState() {
+		ensureModules();
 		readStoreBalance();
 		const earned = (typeof state.orbBalance === "number" && typeof state.initialOrbBalance === "number")
 			? Math.max(0, state.orbBalance - state.initialOrbBalance)
@@ -701,6 +768,7 @@
 
 	async function tick() {
 		if (state.isTicking) return;
+		if (!ensureModules()) return;
 		state.isTicking = true;
 		try {
 			await refreshBalance(false);
@@ -723,8 +791,8 @@
 
 	window.__questTrackerV9 = {
 		startAll: function() {
-			if (state.initError) {
-				addLog("Ошибка: " + state.initError, "err");
+			if (!ensureModules() || state.initError) {
+				addLog("Ошибка: " + (state.initError || "Discord еще не загрузился"), "err");
 				return JSON.stringify(getState());
 			}
 			stopInternal(true);
@@ -736,8 +804,8 @@
 			return JSON.stringify(getState());
 		},
 		startOne: function(questId) {
-			if (state.initError) {
-				addLog("Ошибка: " + state.initError, "err");
+			if (!ensureModules() || state.initError) {
+				addLog("Ошибка: " + (state.initError || "Discord еще не загрузился"), "err");
 				return JSON.stringify(getState());
 			}
 			stopInternal(true);
@@ -745,7 +813,7 @@
 			state.abort = false;
 			state.isRunning = true;
 			state.currentQuestId = questId;
-			const q = QuestsStore.quests.get(questId);
+			const q = stores.QuestsStore.quests.get(questId);
 			addLog("Запуск квеста: «" + (q?.config?.messages?.questName || questId) + "»", "run");
 			runSingleBg(questId, token);
 			return JSON.stringify(getState());
@@ -755,6 +823,7 @@
 			return JSON.stringify(getState());
 		},
 		enrollNow: function() {
+			if (!ensureModules()) return JSON.stringify(getState());
 			addLog("Проверка и принятие новых квестов...", "info");
 			enrollAllAvailable().then((cnt) => {
 				if (cnt === 0) addLog("Новых непринятых квестов нет.", "info");
@@ -776,9 +845,7 @@
 		getState: getState
 	};
 
-	addLog("Контроллер подключен к Discord.", "ok");
-	refreshBalance(true);
-	tick();
-	window.__questTrackerV9Timer = setInterval(tick, 12000);
+	ensureModules();
+	window.__questTrackerV9Timer = setInterval(tick, 5000);
 	return JSON.stringify(getState());
 })();
